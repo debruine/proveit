@@ -2,12 +2,20 @@ library(Rcpp)
 library(MASS)
 
 withincor_render_plots <- function(input) {
-  print("plots")
   cor.true <- input$withincor_r
-  mx <- 0
-  my <- input$withincor_es
-  sdx <- 1
-  sdy <- 1
+  
+  # generic example
+  #mx <- 0
+  #my <- input$withincor_es
+  #sdx <- 1
+  #sdy <- 1
+  
+  # IQ example
+  mx <- input$withincor_m1
+  my <- input$withincor_m2
+  sdx <- input$withincor_sd1
+  sdy <- input$withincor_sd2
+  
   n <- input$withincor_n
   n1 <- input$withincor_n
   n2 <- input$withincor_n
@@ -66,3 +74,4 @@ withincor_render_plots <- function(input) {
   
   list(p1, p2, p3)
 }
+
