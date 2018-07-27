@@ -21,17 +21,17 @@ withincor_tab <- tabItem(
     column( # start column 2
       width = 8,
       box(
-        title = "Plot 1",
+        title = "Data",
         width = NULL,
         plotOutput(outputId = "withincor_plot1", height = "auto")
       ),
       box(
-        title = "Plot 2",
+        title = "Difference Scores",
         width = NULL,
         plotOutput(outputId = "withincor_plot2", height = "auto")
       ),
       box(
-        title = "Plot 3",
+        title = "Correlation",
         width = NULL,
         plotOutput(outputId = "withincor_plot3", height = "auto")
       )

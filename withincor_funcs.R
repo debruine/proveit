@@ -30,23 +30,39 @@ withincor_render_plots <- function(input) {
   y<-mat[,2]*sdy+my
   dif<-x-y
   datasetplot<-data.frame(x,y)
-  DV<-c(x,y) #combine the two samples into a single variable
-  IV<-as.factor(c(rep("1", n1), rep("2", n2))) #create the independent variable (1 and 2) 
-  dataset<-data.frame(IV,DV) #create a dataframe (to make the plot)
-  t.test(x, y, alternative = "two.sided", paired = FALSE, var.equal = TRUE, conf.level = 0.95) #t-test
+  dataset <- data.frame(
+    DV = c(x,y),
+    IV = rep(c(1, 2), each = n)
+  )
+  
+  t <- t.test(x, y, alternative = "two.sided", 
+              paired = FALSE, 
+              var.equal = TRUE, 
+              conf.level = 0.95) #t-test
   
   p1 <- ggplot(dataset, aes(DV, fill = as.factor(IV)))  + 
-    geom_histogram(alpha=0.4, binwidth=2, position="identity", colour="black", aes(y = ..density..)) +
+    geom_histogram(alpha=0.4, binwidth=2, 
+                   position="identity", 
+                   colour="black", 
+                   aes(y = ..density..),
+                   show.legend = F) +
     scale_fill_manual(values=cbbPalette, name = "Condition") +
     stat_function(fun=dnorm, args=c(mean=mx,sd=sdx), size=1, color="#E69F00", lty=2) +
     stat_function(fun=dnorm, args=c(mean=my,sd=sdy), size=1, color="#56B4E9", lty=2) +
-    xlab("IQ") + ylab("number of people")  + ggtitle("Data") + theme_bw(base_size=20) + 
-    theme(panel.grid.major.x = element_blank(), axis.text.y = element_blank(), panel.grid.minor.x = element_blank()) + 
+    xlab("IQ") + 
+    ylab("number of people")  + 
+    #ggtitle("Data") + 
+    theme_bw(base_size=20) + 
+    theme(panel.grid.major.x = element_blank(), 
+          axis.text.y = element_blank(), 
+          panel.grid.minor.x = element_blank()) + 
     geom_vline(xintercept=mean(x), colour="black", linetype="dashed", size=1) + 
     geom_vline(xintercept=mean(y), colour="black", linetype="dashed", size=1) + 
-    coord_cartesian(xlim=c(50,150)) + scale_x_continuous(breaks=c(50,60,70,80,90,100,110,120,130,140,150)) +
-    annotate("text", x = 70, y = 0.02, label = paste("Mean X = ",round(mean(x)),"\n","SD = ",round(sd(x)),sep="")) +
-    annotate("text", x = 130, y = 0.02, label = paste("Mean Y = ",round(mean(y)),"\n","SD = ",round(sd(y)),sep="")) +
+    coord_cartesian(xlim=c(50,150)) + scale_x_continuous(breaks=seq(50, 150, by = 10)) +
+    annotate("text", x = 70, y = 0.02, 
+             label = paste("Mean X = ",round(mean(x)),"\n","SD = ",round(sd(x)),sep="")) +
+    annotate("text", x = 130, y = 0.02, 
+             label = paste("Mean Y = ",round(mean(y)),"\n","SD = ",round(sd(y)),sep="")) +
     theme(plot.title = element_text(hjust = 0.5))
   
   
@@ -54,11 +70,18 @@ withincor_render_plots <- function(input) {
   p2 <- ggplot(as.data.frame(dif), aes(dif))  + 
     geom_histogram(colour="black", fill="grey", aes(y=..density..), binwidth=2) +
     #  geom_density(fill=NA, colour="black", size = 1) +
-    xlab("IQ dif") + ylab("number of people")  + ggtitle("Data") + theme_bw(base_size=20) + 
-    theme(panel.grid.major.x = element_blank(), axis.text.y = element_blank(), panel.grid.minor.x = element_blank()) + 
+    xlab("IQ dif") + ylab("number of people")  + 
+    #ggtitle("Data") + 
+    theme_bw(base_size=20) + 
+    theme(panel.grid.major.x = element_blank(), 
+          axis.text.y = element_blank(), 
+          panel.grid.minor.x = element_blank()) + 
     geom_vline(xintercept=mean(dif), colour="gray20", linetype="dashed") + 
-    coord_cartesian(xlim=c(-80:80)) + scale_x_continuous(breaks=c(seq(-80, 80, 10))) +
-    annotate("text", x = mean(dif), y = 0.01, label = paste("Mean = ",round(mean(dif)),"\n","SD = ",round(sd(dif)),sep="")) +
+    coord_cartesian(xlim=c(-80:80)) + 
+    scale_x_continuous(breaks=c(seq(-80, 80, 10))) +
+    #annotate("text", x = mean(dif), y = 0.01, 
+    #         label = paste("Mean = ",round(mean(dif)),"\n","SD = ",round(sd(dif)),sep="")) +
+    ggtitle(paste0("Mean = ",round(mean(dif)),"; ","SD = ",round(sd(dif)))) +
     theme(plot.title = element_text(hjust = 0.5))
   
   #Plot correlation
@@ -66,8 +89,11 @@ withincor_render_plots <- function(input) {
     geom_point(size=2) +    # Use hollow circles
     geom_smooth(method=lm, colour="#E69F00", size = 1, fill = "#56B4E9") + # Add linear regression line
     coord_cartesian(xlim=c(40,160), ylim=c(40,160)) +
-    scale_x_continuous(breaks=c(seq(40, 160, 20))) + scale_y_continuous(breaks=c(seq(40, 160, 20))) +
-    xlab("IQ twin 1") + ylab("IQ twin 2")  + ggtitle(paste("Correlation = ",round(cor(x,y),digits=2),sep="")) + theme_bw(base_size=20) + 
+    scale_x_continuous(breaks=c(seq(40, 160, 20))) + 
+    scale_y_continuous(breaks=c(seq(40, 160, 20))) +
+    xlab("IQ twin 1") + ylab("IQ twin 2")  + 
+    ggtitle(paste("Correlation = ",round(cor(x,y),digits=2),sep="")) + 
+    theme_bw(base_size=20) + 
     theme(panel.grid.major.x = element_blank(), panel.grid.minor.x = element_blank()) +
     coord_fixed(ratio = 1)  +
     theme(plot.title = element_text(hjust = 0.5))

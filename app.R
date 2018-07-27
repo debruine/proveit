@@ -53,7 +53,7 @@ server <- function(input, output, session) {
     output$withincor_plot2 <- renderPlot({
       plots[2]
     }, height = function() {
-      session$clientData$output_withincor_plot2_width
+      session$clientData$output_withincor_plot2_width/2
     })
     
     output$withincor_plot3 <- renderPlot({
@@ -64,7 +64,7 @@ server <- function(input, output, session) {
     
     plots[1]
   }, height = function() {
-    session$clientData$output_withincor_plot1_width
+    session$clientData$output_withincor_plot1_width/2
   })
   
   output$vvvar_plot <- renderPlot({
