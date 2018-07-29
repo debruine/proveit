@@ -3,6 +3,7 @@ library(shiny)
 library(shinyjs)
 library(shinydashboard)
 library(ggplot2)
+library(viridis)
 
 ## Functions ----
 

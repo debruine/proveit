@@ -4,12 +4,14 @@ library(MASS)
 withincor_render_plots <- function(input) {
   cor.true <- input$withincor_r
   
-  # generic example
-  #mx <- 0
-  #my <- input$withincor_es
-  #sdx <- 1
-  #sdy <- 1
-  
+  #generic example
+  mx <- 100
+  my <- 106
+  sdx <- 1
+  sdy <- 1
+  cor.true <- 0.7
+  n <- 100
+
   # IQ example
   mx <- input$withincor_m1
   my <- input$withincor_m2
@@ -48,7 +50,7 @@ withincor_render_plots <- function(input) {
                    aes(y = ..density..),
                    show.legend = F) +
     #scale_fill_manual(values=cbbPalette, name = "Condition") +
-    scale_fill_viridis_d(name = "Condition") + # viridis is better for colourblindness
+    scale_fill_viridis(discrete=TRUE) + # viridis is better for colourblindness
     stat_function(fun=dnorm, args=c(mean=mx,sd=sdx), size=1, color="#E69F00", lty=2) +
     stat_function(fun=dnorm, args=c(mean=my,sd=sdy), size=1, color="#56B4E9", lty=2) +
     xlab("IQ") + 
