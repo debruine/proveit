@@ -17,10 +17,11 @@ withincor_render_plots <- function(input) {
   sdy <- input$withincor_sd2
   
   n <- input$withincor_n
-  n1 <- input$withincor_n
-  n2 <- input$withincor_n
+  if (n <= 0) { n = 100 } # fix: change slider too
+  n1 <- n
+  n2 <- n
   
-  cbbPalette<-c("#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+  #cbbPalette<-c("#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
   
   #randomly draw data
   cov.mat <- matrix(c(1.0, cor.true, cor.true, 1.0), nrow = 2, byrow = T)
@@ -46,24 +47,27 @@ withincor_render_plots <- function(input) {
                    colour="black", 
                    aes(y = ..density..),
                    show.legend = F) +
-    scale_fill_manual(values=cbbPalette, name = "Condition") +
+    #scale_fill_manual(values=cbbPalette, name = "Condition") +
+    scale_fill_viridis_d(name = "Condition") + # viridis is better for colourblindness
     stat_function(fun=dnorm, args=c(mean=mx,sd=sdx), size=1, color="#E69F00", lty=2) +
     stat_function(fun=dnorm, args=c(mean=my,sd=sdy), size=1, color="#56B4E9", lty=2) +
     xlab("IQ") + 
     ylab("number of people")  + 
     #ggtitle("Data") + 
-    theme_bw(base_size=20) + 
+    theme_bw(base_size=16) + 
     theme(panel.grid.major.x = element_blank(), 
           axis.text.y = element_blank(), 
           panel.grid.minor.x = element_blank()) + 
     geom_vline(xintercept=mean(x), colour="black", linetype="dashed", size=1) + 
     geom_vline(xintercept=mean(y), colour="black", linetype="dashed", size=1) + 
     coord_cartesian(xlim=c(50,150)) + scale_x_continuous(breaks=seq(50, 150, by = 10)) +
-    annotate("text", x = 70, y = 0.02, 
-             label = paste("Mean X = ",round(mean(x)),"\n","SD = ",round(sd(x)),sep="")) +
-    annotate("text", x = 130, y = 0.02, 
-             label = paste("Mean Y = ",round(mean(y)),"\n","SD = ",round(sd(y)),sep="")) +
-    theme(plot.title = element_text(hjust = 0.5))
+    #annotate("text", x = 70, y = 0.02, 
+    #         label = paste("Mean X = ",round(mean(x)),"\n","SD = ",round(sd(x)),sep="")) +
+    #annotate("text", x = 130, y = 0.02, 
+    #         label = paste("Mean Y = ",round(mean(y)),"\n","SD = ",round(sd(y)),sep="")) +
+    theme(plot.title = element_text(hjust = 0.5)) +
+    ggtitle(paste0("X: M = ",round(mean(x),1),", ","SD = ",round(sd(x), 1), 
+                   "; Y: M = ",round(mean(y),1),", ","SD = ",round(sd(y), 1)))
   
   
   #plot data differences
@@ -72,7 +76,7 @@ withincor_render_plots <- function(input) {
     #  geom_density(fill=NA, colour="black", size = 1) +
     xlab("IQ dif") + ylab("number of people")  + 
     #ggtitle("Data") + 
-    theme_bw(base_size=20) + 
+    theme_bw(base_size=16) + 
     theme(panel.grid.major.x = element_blank(), 
           axis.text.y = element_blank(), 
           panel.grid.minor.x = element_blank()) + 
@@ -93,9 +97,9 @@ withincor_render_plots <- function(input) {
     scale_y_continuous(breaks=c(seq(40, 160, 20))) +
     xlab("IQ twin 1") + ylab("IQ twin 2")  + 
     ggtitle(paste("Correlation = ",round(cor(x,y),digits=2),sep="")) + 
-    theme_bw(base_size=20) + 
+    theme_bw(base_size=16) + 
     theme(panel.grid.major.x = element_blank(), panel.grid.minor.x = element_blank()) +
-    coord_fixed(ratio = 1)  +
+    #coord_fixed(ratio = 1)  +
     theme(plot.title = element_text(hjust = 0.5))
   
   list(p1, p2, p3)
