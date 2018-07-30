@@ -40,6 +40,8 @@ ui <- dashboardPage(
 server <- function(input, output, session) { 
   
   withincor_plots <- reactive({
+    resim <- input$withincor_resim
+    
     withincor_render_plots(input$withincor_r,
                            input$withincor_m1,
                            input$withincor_m2,
@@ -50,7 +52,6 @@ server <- function(input, output, session) {
   })
   
   output$withincor_plot1 <- renderPlot({
-    # change this to use reactive
     withincor_plots()[1]
   }, height = function() {
     session$clientData$output_withincor_plot1_width/2
