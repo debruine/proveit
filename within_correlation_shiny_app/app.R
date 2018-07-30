@@ -39,25 +39,33 @@ ui <- dashboardPage(
 ## server ----
 server <- function(input, output, session) { 
   
+  withincor_plots <- reactive({
+    withincor_render_plots(input$withincor_r,
+                           input$withincor_m1,
+                           input$withincor_m2,
+                           input$withincor_sd1,
+                           input$withincor_sd2,
+                           input$withincor_n, 
+                           session)
+  })
+  
   output$withincor_plot1 <- renderPlot({
-    # stupid; change this
-    plots <- withincor_render_plots(input)
-    
-    output$withincor_plot2 <- renderPlot({
-      plots[2]
-    }, height = function() {
-      session$clientData$output_withincor_plot2_width/2
-    })
-    
-    output$withincor_plot3 <- renderPlot({
-      plots[3]
-    }, height = function() {
-      session$clientData$output_withincor_plot3_width
-    })
-    
-    plots[1]
+    # change this to use reactive
+    withincor_plots()[1]
   }, height = function() {
     session$clientData$output_withincor_plot1_width/2
+  })
+  
+  output$withincor_plot2 <- renderPlot({
+    withincor_plots()[2]
+  }, height = function() {
+    session$clientData$output_withincor_plot2_width/2
+  })
+  
+  output$withincor_plot3 <- renderPlot({
+    withincor_plots()[3]
+  }, height = function() {
+    session$clientData$output_withincor_plot3_width
   })
   
 } # end server()

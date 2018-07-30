@@ -1,27 +1,11 @@
 library(Rcpp)
 library(MASS)
 
-withincor_render_plots <- function(input) {
-  cor.true <- input$withincor_r
-  
-  #generic example
-  mx <- 100
-  my <- 106
-  sdx <- 1
-  sdy <- 1
-  cor.true <- 0.7
-  n <- 100
-
-  # IQ example
-  mx <- input$withincor_m1
-  my <- input$withincor_m2
-  sdx <- input$withincor_sd1
-  sdy <- input$withincor_sd2
-  
-  n <- input$withincor_n
-  if (n <= 0) { n = 100 } # fix: change slider too
-  n1 <- n
-  n2 <- n
+withincor_render_plots <- function(cor.true, mx, my, sdx, sdy, n, session) {
+  if (n <= 0) { 
+    n = 100 
+    updateSliderInput(session, "withincor_n", value = n)
+  }
   
   #cbbPalette<-c("#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
   
@@ -31,7 +15,7 @@ withincor_render_plots <- function(input) {
   mat <- mvrnorm(n, Sigma = cov.mat, mu = mu, empirical = FALSE)
   x<-mat[,1]*sdx+mx
   y<-mat[,2]*sdy+my
-  dif<-x-y
+  dif<-y-x
   datasetplot<-data.frame(x,y)
   dataset <- data.frame(
     DV = c(x,y),
@@ -51,8 +35,10 @@ withincor_render_plots <- function(input) {
                    show.legend = F) +
     #scale_fill_manual(values=cbbPalette, name = "Condition") +
     scale_fill_viridis(discrete=TRUE) + # viridis is better for colourblindness
-    stat_function(fun=dnorm, args=c(mean=mx,sd=sdx), size=1, color="#E69F00", lty=2) +
-    stat_function(fun=dnorm, args=c(mean=my,sd=sdy), size=1, color="#56B4E9", lty=2) +
+    stat_function(fun=dnorm, args=c(mean=mx,sd=sdx), size=1, 
+                  color=viridisLite::viridis(2)[1], lty=2) +
+    stat_function(fun=dnorm, args=c(mean=my,sd=sdy), size=1, 
+                  color=viridisLite::viridis(2)[2], lty=2) +
     xlab("IQ") + 
     ylab("number of people")  + 
     #ggtitle("Data") + 
@@ -87,7 +73,7 @@ withincor_render_plots <- function(input) {
     scale_x_continuous(breaks=c(seq(-80, 80, 10))) +
     #annotate("text", x = mean(dif), y = 0.01, 
     #         label = paste("Mean = ",round(mean(dif)),"\n","SD = ",round(sd(dif)),sep="")) +
-    ggtitle(paste0("Mean = ",round(mean(dif)),"; ","SD = ",round(sd(dif)))) +
+    ggtitle(paste0("M = ",round(mean(dif)),"; ","SD = ",round(sd(dif)))) +
     theme(plot.title = element_text(hjust = 0.5))
   
   #Plot correlation
