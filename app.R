@@ -76,9 +76,18 @@ server <- function(input, output, session) {
     session$clientData$output_withincor_plot3_width
   })
   
-  output$vvvar_plot <- renderPlot({
+  vvvar_data <- reactive({
     resim <- input$vvvar_resim
-    vvvar_render_plot(input)
+    
+    vvvar_get_data(input$vvvar_n, input$vvvar_m, input$vvvar_sd)
+  })
+  
+  output$vvvar_plot <- renderPlot({
+    vvvar_render_plot(vvvar_data(), 
+                      input$vvvar_n, 
+                      input$vvvar_m, 
+                      input$vvvar_sd, 
+                      input$vvvar_view)
   }, height = function() {
     session$clientData$output_vvvar_plot_width
   })

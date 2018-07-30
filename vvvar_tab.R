@@ -9,7 +9,6 @@ vvvar_tab <- tabItem(
       box(
         title = "Parameters",
         width = NULL,
-        #numericInput("vvvar_n", "", 100),
         sliderInput("vvvar_n", "N:", min = 0, max = 1e3, value = 100, step = 10),
         sliderInput("vvvar_m", "Mean:", min = -10, max = 10, value = 0, step = .1),
         sliderInput("vvvar_sd", "SD:", min = 0, max = 10, value = 5, step = 0.1)

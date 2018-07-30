@@ -1,14 +1,16 @@
-vvvar_render_plot <- function(input) {
+vvvar_get_data <- function(n, m, sd) {
   # input error handling
-  n <- ifelse(is.numeric(input$vvvar_n), max(1, round(input$vvvar_n)), 1e3)
-  m <- ifelse(is.numeric(input$vvvar_m), input$vvvar_m, 0)
-  sd <- ifelse(is.numeric(input$vvvar_sd), input$vvvar_sd, 5)
+  n <- ifelse(is.numeric(n), max(1, round(n)), 1e3)
+  m <- ifelse(is.numeric(m), m, 0)
+  sd <- ifelse(is.numeric(sd), sd, 5)
   
   data <- data.frame(
     dn = 1:n,
     dv = rnorm(n, m, sd)
   )
-  
+}
+
+vvvar_render_plot <- function(data, n, m, sd, view) {
   cols <- c("mean" = "purple", 
             "±1SD" = "blue", 
             "±2SD" = "darkgreen", 
@@ -16,7 +18,7 @@ vvvar_render_plot <- function(input) {
   
   g <- ggplot(data)
   
-  if ("lines" %in% input$vvvar_view) {
+  if ("lines" %in% view) {
     g <- g + 
       geom_hline(color = "grey20", yintercept = m) +
       geom_hline(color = "grey40", yintercept = m - sd) +
@@ -27,11 +29,11 @@ vvvar_render_plot <- function(input) {
       geom_hline(color = "grey80", yintercept = m + 3*sd)
   }
   
-  if ("points" %in% input$vvvar_view) {
+  if ("points" %in% view) {
     g <- g + geom_point(aes(dn, dv), alpha = 1/log(n+2))
   }
   
-  if ("violin" %in% input$vvvar_view) {
+  if ("violin" %in% view) {
     g <- g + 
       geom_violin(aes(n/2, dv), 
                   width = n/2, 
@@ -42,7 +44,7 @@ vvvar_render_plot <- function(input) {
                  alpha = 0.5)
   }
   
-  if ("boxplot" %in% input$vvvar_view) {
+  if ("boxplot" %in% view) {
     g <- g + geom_boxplot(aes(dn, dv, group = "dv"), 
                           width = 0.25, alpha = 0.5)
   }
