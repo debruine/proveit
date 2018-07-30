@@ -15,26 +15,43 @@ peek <- function(start_n, max_n, by = 1, alpha = 0.05, dist = "normal") {
   0 # if none sig by end
 }
 
-peek_render_plot <- function(input) {
-  r <- replicate(input$peek_reps, 
-                 peek(input$peek_n[1], 
-                      input$peek_n[2], 
-                      input$peek_by, 
-                      input$peek_alpha))
+peek_render_plot <- function(n, by, alpha, reps, session) {
+  if (by == 0) { 
+    by = 1
+    updateSliderInput(session, "peek_by", value = 1)
+  }
+  if (alpha == 0) { 
+    alpha = .001
+    updateSliderInput(session, "alpha", value = .001)
+  }
+  if (n[1] == 0) { 
+    n[1] = 10
+  }
+  if (n[2] == 0) {
+    n[2] = 10
+  }
+  updateSliderInput(session, "peek_n", value = n)
   
-  pcnt_sig <- round(100*sum(r > 0)/input$peek_reps, 1)
+  
+  r <- replicate(reps, 
+                 peek(n[1], 
+                      n[2], 
+                      by, 
+                      alpha))
+  
+  pcnt_sig <- round(100*sum(r > 0)/reps, 1)
   
   html("intro", paste0("This simulated a normal distribution with with no effect and ran a 
-      1-sample t-test on the first ",input$peek_n[1]," observations, then collected ",input$peek_by," new 
-      observations and peeked again until ",input$peek_n[2]," observations. This procedure was run 
-      ",input$peek_reps," times and reported the percent of runs that produced a significant result 
-      (p < ",input$peek_alpha,")  and plotted the N at which the first significant result was found."))
+      1-sample t-test on the first ",n[1]," observations, then collected ",by," new 
+      observations and peeked again until ",n[2]," observations. This procedure was run 
+      ",reps," times and reported the percent of runs that produced a significant result 
+      (p < ",alpha,")  and plotted the N at which the first significant result was found."))
   
   ggplot() +
     geom_histogram(aes(r, y=..density..), binwidth = 1,
                    color = "black", fill="red") +
-    coord_cartesian(xlim = c(input$peek_n[1]-0.5, input$peek_n[2]+0.5), ylim = c(0, 0.1)) +
+    coord_cartesian(xlim = c(n[1]-0.5, n[2]+0.5), ylim = c(0, 0.1)) +
     theme_minimal() +
     labs(x = "Number of observations at first significant p-value",
-         title = paste0(pcnt_sig, "% of ", input$peek_reps, " runs obtained a significant result"))
+         title = paste0(pcnt_sig, "% of ", reps, " runs obtained a significant result"))
 }

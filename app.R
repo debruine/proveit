@@ -94,7 +94,11 @@ server <- function(input, output, session) {
   
   output$peek_plot <- renderPlot({
     resim <- input$peek_resim
-    peek_render_plot(input)
+    peek_render_plot(input$peek_n,
+                     input$peek_by,
+                     input$peek_alpha,
+                     input$peek_reps,
+                     session)
   }, height = function() {
     session$clientData$output_peek_plot_width
   })

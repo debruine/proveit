@@ -11,13 +11,13 @@ peek_tab <- tabItem(
         title = "Parameters",
         width = NULL,
         sliderInput("peek_n", "Observations at first and last peek", 
-                    min = 10, max = 100, step = 10, value = c(10, 50)),
+                    min = 0, max = 200, step = 10, value = c(10, 50)),
         sliderInput("peek_by", "New observations before next peek", 
-                    min = 1, max = 10, step = 1, value = 5),
+                    min = 0, max = 50, step = 1, value = 5),
         sliderInput("peek_alpha", "Significant p-value (alpha)", 
-                    min = .001, max = .10, step = .001, value = .05),
+                    min = 0, max = .10, step = .001, value = .05),
         sliderInput("peek_reps", "Number of runs in this simulation", 
-                    min = 100, max = 1000, step = 100, value = 100),
+                    min = 1000, max = 10000, step = 1000, value = 1000),
         actionButton("peek_resim", "Re-Simulate")
       )
     ), # end column 1
