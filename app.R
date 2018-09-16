@@ -2,7 +2,10 @@
 library(shiny)
 library(shinyjs)
 library(shinydashboard)
+library(dplyr)
+library(tidyr)
 library(ggplot2)
+library(purrr)
 library(viridis)
 
 ## Functions ----
@@ -10,12 +13,14 @@ library(viridis)
 source("within_correlation_shiny_app/withincor_funcs.R")
 source("vvvar_funcs.R")
 source("peek_funcs.R")
+source("npref/npred_funcs.R")
 
 ## Interface Tab Items ----
 
 source("within_correlation_shiny_app/withincor_tab.R")
 source("vvvar_tab.R")
 source("peek_tab.R")
+source("npred/npred_tab.R")
 
 about_tab <- tabItem(
   tabName = "about_tab",
@@ -31,6 +36,7 @@ ui <- dashboardPage(
       menuItem("Within Cor", tabName = "withincor_tab"),
       menuItem("Peek", tabName = "peek_tab"),
       menuItem("Va-va-variance!", tabName = "vvvar_tab"),
+      menuItem("N Predictors", tabName = "npred_tab"),
       menuItem("About", tabName = "about_tab")
     )
   ),
@@ -39,6 +45,7 @@ ui <- dashboardPage(
       withincor_tab,
       peek_tab,
       vvvar_tab,
+      npred_tab,
       about_tab
     )
   )
@@ -101,6 +108,14 @@ server <- function(input, output, session) {
                      session)
   }, height = function() {
     session$clientData$output_peek_plot_width
+  })
+  
+  output$npred_plot <- renderPlot({
+    resim <- input$npred_resim
+    
+    npred_plot(input$npred_n, input$npred_vars, input$npred_reps)
+  }, height = function() {
+    session$clientData$output_npred_plot_width
   })
   
 } # end server()
