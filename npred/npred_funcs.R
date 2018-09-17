@@ -32,7 +32,7 @@ npred_sim <- function(sub_n = 100, var_n = 5) {
   summary(mod)$r.squared
 }
 
-npred_plot <- function(n, vars, reps) {
+npred_plot <- function(n, vars, reps, progress) {
   # set to each 25th integer between first and last if n length > 1
   o <- seq(n[1], n[length(n)], by = 25)
   # set to all integers between first and last if vars length > 1
@@ -42,7 +42,11 @@ npred_plot <- function(n, vars, reps) {
               var_n = v,
               obs_n = o
               ) %>%
-    mutate(pv = map2_dbl(obs_n, var_n, npred_sim),
+    mutate(pv = map2_dbl(obs_n, var_n, function(o, v) {
+      # increment progress bar
+      progress$inc(1/nrow(.))
+      npred_sim(o, v)
+    }),
            var_n = paste0(var_n, " (", nparams(var_n)," terms)"),
            obs_n = paste(obs_n, "observations"),
            var_n = factor(var_n, levels = paste0(v, " (", nparams(v)," terms)")),
