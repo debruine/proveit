@@ -26,29 +26,27 @@ ui <- dashboardPage(
   dashboardHeader(title = "N Predictors"),
   dashboardSidebar(
     sidebarMenu(
-      menuItem("N Predictors", tabName = "npred_tab"),
-      menuItem("About", tabName = "about_tab")
+      menuItem("N Predictors", tabName = "npred_tab")
     )
   ),
   dashboardBody(
     tabItems(
-      npred_tab,
-      about_tab
+      npred_tab
     )
   )
 )
 
 ## server ----
-server <- function(input, output, session) { 
-  
+server <- function(input, output, session) {
+
   output$npred_plot <- renderPlot({
     resim <- input$npred_resim
-    
+
     npred_plot(input$npred_n, input$npred_vars, input$npred_reps)
   }, height = function() {
-    session$clientData$output_npred_plot_width
+    session$clientData$output_npred_plot_width/1.62
   })
-  
+
 } # end server()
 
 shinyApp(ui, server)
