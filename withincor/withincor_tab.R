@@ -2,7 +2,7 @@
 withincor_tab <- tabItem(
   tabName = "withincor_tab",
   tags$span("This app lets you try out the code from Daniël Lakens' blog post: "),
-  tags$a(href = "daniellakens.blogspot.com/2016/11/why-within-subject-designs-require-less.html",
+  tags$a(href = "https://daniellakens.blogspot.com/2016/11/why-within-subject-designs-require-less.html",
          "Why Within-Subject Designs Require Fewer Participants than Between-Subject Designs"),
   p("Try changing the correlation and see how the SD of the difference scores
     changes and what effect this has on the test statistic."),
