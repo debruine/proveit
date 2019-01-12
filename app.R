@@ -10,14 +10,14 @@ library(viridis)
 
 ## Functions ----
 
-source("within_correlation_shiny_app/withincor_funcs.R")
+source("withincor/withincor_funcs.R")
 source("vvvar_funcs.R")
 source("peek_funcs.R")
-source("npref/npred_funcs.R")
+source("npred/npred_funcs.R")
 
 ## Interface Tab Items ----
 
-source("within_correlation_shiny_app/withincor_tab.R")
+source("withincor/withincor_tab.R")
 source("vvvar_tab.R")
 source("peek_tab.R")
 source("npred/npred_tab.R")
@@ -113,9 +113,14 @@ server <- function(input, output, session) {
   output$npred_plot <- renderPlot({
     resim <- input$npred_resim
     
-    npred_plot(input$npred_n, input$npred_vars, input$npred_reps)
+    # keep track of progress, this function is long
+    progress <- shiny::Progress$new()
+    on.exit(progress$close())
+    progress$set(message = "Making plot", value = 0)
+    
+    npred_plot(input$npred_n, input$npred_vars, input$npred_reps, progress)
   }, height = function() {
-    session$clientData$output_npred_plot_width
+    session$clientData$output_npred_plot_width/1.62
   })
   
 } # end server()
