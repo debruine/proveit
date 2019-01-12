@@ -1,7 +1,7 @@
-### anova_tab ----
-anova_tab <- tabItem(
-  tabName = "anova_tab",
-  p(""),
+### fixef_tab ----
+fixef_tab <- tabItem(
+  tabName = "fixef_tab",
+  actionButton("calc_fixed", "Calculate Fixed Effects"),
   fluidRow( # start row 1
     column(
       width = 12,
@@ -14,6 +14,11 @@ anova_tab <- tabItem(
         title = "By-Stimuli ANOVA",
         width = 12,
         tableOutput("stim_coef")
+      ),
+      box(
+        title = "LMER",
+        width = 12,
+        tableOutput("lmer_coef")
       )
     )
   ) # end row 1

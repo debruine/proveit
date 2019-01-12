@@ -1,4 +1,146 @@
-sim_dat  <- function( sub_n = 100,
+rnorm_multi <- function(n, vars = 3, cors = 0, mu = 0, sd = 1, 
+                        varnames = NULL, empirical = FALSE) {
+  # error handling
+  if ( !is.numeric(n) || n %% 1 > 0 || n < 3 ) {
+    stop("n must be an integer > 2")
+  }
+  
+  if (!(empirical  %in% c(TRUE, FALSE))) {
+    stop("empirical must be TRUE or FALSE")
+  }
+  
+  if (length(mu) == 1) {
+    mu <- rep(mu, vars)
+  } else if (length(mu) != vars) {
+    stop("the length of mu must be 1 or vars");
+  }
+  
+  if (length(sd) == 1) {
+    sd <- rep(sd, vars)
+  } else if (length(sd) != vars) {
+    stop("the length of sd must be 1 or vars");
+  }
+  
+  # correlation matrix
+  if (class(cors) == "numeric" & length(cors) == 1) {
+    if (cors >=-1 & cors <=1) {
+      cors = rep(cors, vars*(vars-1)/2)
+    } else {
+      stop("cors must be between -1 and 1")
+    }
+  }
+  
+  if (class(cors) == "matrix") { 
+    if (!is.numeric(cors)) {
+      stop("cors matrix not numeric")
+    } else if (dim(cors)[1] != vars || dim(cors)[2] != vars) {
+      stop("cors matrix wrong dimensions")
+    } else if (sum(cors == t(cors)) != (nrow(cors)^2)) {
+      stop("cors matrix not symmetric")
+    } else if (!matrixcalc::is.positive.definite(cors)) {
+      stop("cors matrix not positive definite")
+    } else {
+      cor_mat <- cors
+    }
+  } else if (length(cors) == vars*vars) {
+    cor_mat <- matrix(cors, vars)
+  } else if (length(cors) == vars*(vars-1)/2) {
+    # generate full matrix from vector of upper right triangle
+    cor_mat <- matrix(nrow=vars, ncol = vars)
+    upcounter = 1
+    lowcounter = 1
+    for (col in 1:vars) {
+      for (row in 1:vars) {
+        if (row == col) {
+          # diagonal
+          cor_mat[row, col] = 1
+        } else if (row < col) {
+          # upper right triangle
+          cor_mat[row, col] = cors[upcounter]
+          upcounter <- upcounter + 1
+        } else {
+          # lower left triangle
+          cor_mat[row, col] = cors[lowcounter]
+          lowcounter <- lowcounter + 1
+        }
+      }
+    }
+  }
+  
+  sigma <- (sd %*% t(sd)) * cor_mat
+  bvn <- MASS::mvrnorm(n, mu, sigma, empirical = empirical)
+  df <- data.frame(bvn)
+  
+  if (length(varnames) == vars) {
+    names(df) <- varnames
+  }
+  
+  df
+}
+
+simple_means_to_effects <- function(hard_congr = 0,
+                                    hard_incon = 0,
+                                    easy_congr = 0,
+                                    easy_incon = 0) {
+    # mean of all conditions
+    grand_i <- (easy_congr + easy_incon + hard_congr + hard_incon)/4
+    # mean difference between easy and hard conditions
+    sub_cond_eff     <- (hard_congr + hard_incon)/2 -
+                        (easy_congr + easy_incon)/2
+                        
+    # mean difference between incongruent and congruent versions
+    stim_version_eff <- (hard_incon + easy_incon)/2 - 
+                        (hard_congr + easy_congr)/2  
+    # interaction between version and condition
+    cond_version_ixn <- (hard_incon - hard_congr) -
+                        (easy_incon - easy_congr)
+                        
+    
+    list(
+      "grand_i" = grand_i,
+      "sub_cond_eff" = sub_cond_eff,
+      "stim_version_eff" = stim_version_eff,
+      "cond_version_ixn" = cond_version_ixn
+    )
+}
+
+effects_to_simple_means <- function(grand_i = 400,
+                                    sub_cond_eff = 0,
+                                    stim_version_eff = 0,
+                                    cond_version_ixn = 0,
+                                    # coding
+                                    hard = 0.5,
+                                    easy = -0.5,
+                                    congr = -0.5,
+                                    incon = 0.5) {
+  
+  
+  hard_congr <- grand_i + 
+    hard * sub_cond_eff + 
+    congr * stim_version_eff + 
+    hard * congr * cond_version_ixn
+  easy_congr <- grand_i + 
+    easy * sub_cond_eff + 
+    congr * stim_version_eff + 
+    easy * congr * cond_version_ixn
+  hard_incon <- grand_i + 
+    hard * sub_cond_eff + 
+    incon * stim_version_eff + 
+    hard * incon * cond_version_ixn
+  easy_incon <- grand_i + 
+    easy * sub_cond_eff + 
+    incon * stim_version_eff + 
+    easy * incon * cond_version_ixn
+  
+  list(
+    "hard_congr" = hard_congr,
+    "easy_congr" = easy_congr,
+    "hard_incon" = hard_incon,
+    "easy_incon" = easy_incon
+  )
+}
+
+sim_trials  <- function(sub_n = 100,
                       sub_sd = 50,
                       sub_version_sd = 50, 
                       sub_i_version_cor = -0.2,
@@ -9,14 +151,6 @@ sim_dat  <- function( sub_n = 100,
                       stim_cond_version_sd = 50,
                       stim_i_cor = -0.2,
                       stim_s_cor = +0.2,
-                      grand_i = 400,
-                      hard_congr = 0,
-                      hard_incon = 0,
-                      easy_congr = 0,
-                      easy_incon = 0,
-                      sub_cond_eff = NULL,
-                      stim_version_eff = NULL,
-                      cond_version_ixn = NULL,
                       error_sd = 50) {
   sub <- rnorm_multi(
     n = sub_n, 
@@ -46,50 +180,52 @@ sim_dat  <- function( sub_n = 100,
       stim_id = 1:stim_n
     )
   
-  if (is.null(sub_cond_eff) | is.null(stim_version_eff) | is.null(cond_version_ixn)) {
-    # mean difference between easy and hard conditions
-    sub_cond_eff     <- (easy_congr + easy_incon)/2 -
-      (hard_congr + hard_incon)/2
-    # mean difference between incongruent and congruent versions
-    stim_version_eff <- (hard_incon + easy_incon)/2 - 
-      (hard_congr + easy_congr)/2  
-    # interaction between version and condition
-    cond_version_ixn <- (easy_incon - easy_congr) -
-      (hard_incon - hard_congr) 
-  }
-  
   trials <- expand.grid(
     sub_id = sub$sub_id, # get subject IDs from the sub data table
     stim_id = stim$stim_id, # get stimulus IDs from the stim data table
     stim_version = c("congruent", "incongruent") # all subjects see both congruent and incongruent versions of all stimuli
   ) %>%
     left_join(sub, by = "sub_id") %>% # includes the intercept, slope, and conditin for each subject
-    left_join(stim, by = "stim_id")   # includes the intercept and slopes for each stimulus
+    left_join(stim, by = "stim_id") %>%   # includes the intercept and slopes for each stimulus
+    mutate(err = rnorm(nrow(.), 0, error_sd))
   
+  return(trials)
+}
+
+dat_code <- function(trials,
+                     grand_i = 400,
+                     sub_cond_eff = 0,
+                     stim_version_eff = 0,
+                     cond_version_ixn = 0,
+                     hard = 0.5,
+                     easy = -0.5,
+                     congr = -0.5,
+                     incon = 0.5) {
   dat <- trials %>%
     mutate(
-      # effect-code subject condition and stimulus version
-      sub_cond.e = recode(sub_cond, "hard" = -0.5, "easy" = +0.5),
-      stim_version.e = recode(stim_version, "congruent" = -0.5, "incongruent" = +0.5),
+      # code subject condition and stimulus version
+      sub_cond.code = recode(sub_cond, "hard" = hard, "easy" = easy),
+      stim_version.code = recode(stim_version, "congruent" = congr, "incongruent" = incon),
+      sub_cond.e = recode(sub_cond, "hard" = 0.5, "easy" = -0.5),
+      stim_version.e = recode(stim_version, "congruent" = -0.5, "incongruent" = 0.5),
       # calculate trial-specific effects by adding overall effects and slopes
       version_eff = stim_version_eff + stim_version_slope + sub_version_slope,
       cond_eff = sub_cond_eff + stim_cond_slope,
       cond_version_eff = cond_version_ixn + stim_cond_version_slope,
-      # calculate error term (normally distributed residual with SD set above)
-      err = rnorm(nrow(.), 0, error_sd),
       # calculate DV from intercepts, effects, and error
       dv = grand_i + sub_i + stim_i + err +
         (sub_cond.e * cond_eff) + 
         (stim_version.e * version_eff) + 
         (sub_cond.e * stim_version.e * cond_version_eff)
     )
+  
   return(dat)
 }
 
 sim_lmer <- function(dat) {
-  mod <- lmer(dv ~ sub_cond.e * stim_version.e +
-                (1 + stim_version.e | sub_id) + 
-                (1 + stim_version.e*sub_cond.e | stim_id),
+  mod <- lmer(dv ~ sub_cond.code * stim_version.code +
+                (1 + stim_version.code | sub_id) + 
+                (1 + stim_version.code*sub_cond.code | stim_id),
               data = dat)
   
   return(mod)
@@ -97,10 +233,10 @@ sim_lmer <- function(dat) {
 
 sim_sub_anova <- function(dat) {
   dat_sub <- dat %>%
-    group_by(sub_id, sub_cond, sub_cond.e, stim_version, stim_version.e) %>%
+    group_by(sub_id, sub_cond, sub_cond.code, stim_version, stim_version.code) %>%
     summarise(dv = mean(dv))
   
-  mod <- afex::aov_4(dv ~ sub_cond.e + (stim_version.e| sub_id),
+  mod <- afex::aov_4(dv ~ sub_cond.code + (stim_version.code| sub_id),
                      factorize = FALSE, check_contrasts = FALSE,
                      data = dat_sub)
   
@@ -111,10 +247,10 @@ sim_sub_anova <- function(dat) {
 
 sim_stim_anova <- function(dat) {
   dat_stim <- dat %>%
-    group_by(stim_id, sub_cond, sub_cond.e, stim_version, stim_version.e) %>%
+    group_by(stim_id, sub_cond, sub_cond.code, stim_version, stim_version.code) %>%
     summarise(dv = mean(dv))
   
-  mod <- afex::aov_4(dv ~ (sub_cond.e * stim_version.e | stim_id),
+  mod <- afex::aov_4(dv ~ (sub_cond.code * stim_version.code | stim_id),
                      factorize = FALSE, check_contrasts = FALSE,
                      data = dat_stim)
   
@@ -192,14 +328,21 @@ sim_power <- function(rep = 0,
     mutate(rep = rep)
 }
 
-plot_dat <- function(dat, grand_i = 0) {
+plot_dat <- function(dat, grand_i = 0, view = c("violin", "boxplot")) {
   plot <- ggplot(dat, aes(sub_cond, dv, color = stim_version)) +
     geom_hline(yintercept = grand_i) +
-    geom_violin(alpha = 0.5) +
-    geom_boxplot(width = 0.2, position = position_dodge(width = 0.9), show.legend = FALSE) +
     xlab("Subject Condition") +
     ylab("Reaction Time") +
     scale_color_discrete(name = "Stimulus Version")
+  
+  if ("violin" %in% view) {
+    plot <- plot + geom_violin(alpha = 0.5)
+  }
+  
+  if ("boxplot" %in% view) {
+    plot <- plot + geom_boxplot(width = 0.2, position = position_dodge(width = 0.9))
+  }
+    
   return(plot)
 }
 
@@ -211,7 +354,7 @@ plot_ranef_sub <- function(mod, dat) {
   ranef(mod)$sub_id %>%
     as_tibble(rownames = "sub_id") %>%
     rename(mod_i = `(Intercept)`,
-           mod_version_slope = stim_version.e) %>%
+           mod_version_slope = stim_version.code) %>%
     mutate(sub_id = as.integer(sub_id)) %>%
     left_join(sub, by = "sub_id") %>%
     select(mod_i, sub_i, mod_version_slope,  sub_version_slope) %>%
@@ -227,9 +370,9 @@ plot_ranef_stim <- function(mod, dat) {
   ranef(mod)$stim_id %>%
     as_tibble(rownames = "stim_id") %>%
     rename(mod_i = `(Intercept)`,
-           mod_version_slope = stim_version.e,
-           mod_cond_slope = sub_cond.e,
-           mod_cond_version_slope = `stim_version.e:sub_cond.e`) %>%
+           mod_version_slope = stim_version.code,
+           mod_cond_slope = sub_cond.code,
+           mod_cond_version_slope = `stim_version.code:sub_cond.code`) %>%
     mutate(stim_id = as.integer(stim_id)) %>%
     left_join(stim, by = "stim_id") %>%
     select(mod_i, stim_i, 

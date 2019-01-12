@@ -1,22 +1,6 @@
 ### lmer_tab ----
 lmer_tab <- tabItem(
   tabName = "lmer_tab",
-  p(""),
-  fluidRow( # start row 1
-    column(
-      width = 12,
-      box(
-        title = "Fixed Effects",
-        width = 12,
-        tableOutput("lmer_coef")
-      ),
-      box(
-        title = "VarCor",
-        width = 12,
-        tableOutput("lmer_varcor")
-      )
-    )
-  ), # end row 1
   fluidRow(
     column(
       width = 4,
@@ -26,5 +10,11 @@ lmer_tab <- tabItem(
       width = 8,
       plotOutput(outputId = "ranef_stim_plot", height = "auto")
     )
+  ),
+  box(
+    title = "VarCor",
+    solidHeader = TRUE, collapsible = TRUE, collapsed = TRUE,
+    width = 12,
+    tableOutput("lmer_varcor")
   )
 )
