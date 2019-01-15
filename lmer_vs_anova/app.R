@@ -12,7 +12,10 @@ options("scipen"=10, "digits"=4)
 
 ## Functions ----
 
-source("lmer_funcs.R")
+source("R/misc_funcs.R")
+source("R/data_funcs.R")
+source("R/plot_funcs.R")
+source("R/lmer_funcs.R")
 
 ## Interface Tab Items ----
 
@@ -35,15 +38,19 @@ ui <- dashboardPage(
       menuItem("Fixed Effects", tabName = "fixef_tab"),
       menuItem("Random Effects", tabName = "lmer_tab"),
       menuItem("About", tabName = "about_tab"),
-      actionButton("resim", "Re-Simulate"),
-      actionButton("reset", "Reset"),
+      div(style="display:inline-block; width: 50%;",
+        actionButton("resim", "Re-Simulate")
+      ),
+      div(style="display:inline-block; width: 33%;",
+        actionButton("reset", "Reset")
+      ),
       # sample size input ----
       box(
         title = "Sample Size",
         solidHeader = TRUE, collapsible = TRUE, collapsed = TRUE,
         width = NULL,
-        sliderInput("sub_n", "Subjects:", min = 10, max = 100, value = 50, step = 10),
-        sliderInput("stim_n", "Items:", min = 5, max = 100, value = 20, step = 5)
+        sliderInput("sub_n", "Subjects per Group:", min = 10, max = 100, value = 25, step = 10),
+        sliderInput("stim_n", "Stimuli:", min = 5, max = 100, value = 20, step = 5)
       ),
       # coding input ----
       box(
@@ -88,11 +95,9 @@ ui <- dashboardPage(
           sliderInput("hard_congr", "Mean for Hard Congruent",
                       min = 400, max = 800, value = 600, step = 10),
           sliderInput("hard_incon", "Mean for Hard Incongruent",
-                      min = 400, max = 800, value = 600, step = 10),
+                      min = 400, max = 800, value = 600, step = 10)
           
         # )
-        
-        htmlOutput("effect_sizes")
       ),
       
       # random effects input ----
@@ -262,10 +267,12 @@ server <- function(input, output, session) {
     
     output$effect_sizes <- renderUI({
       tagList(
-        p(paste("Grand intercept =", new_eff$grand_i)),
-        p(paste("Condition (hard - easy) =", new_eff$sub_cond_eff)),
-        p(paste("Version (incon - congr) =", new_eff$stim_version_eff)),
-        p(paste("Condition:Version =", new_eff$cond_version_ixn))
+        tags$span(paste("Intercept =", new_eff$grand_i)),
+        tags$span(paste("Condition =", new_eff$sub_cond_eff)),
+        tags$span("(hard - easy)"),
+        tags$span(paste("Version =", new_eff$stim_version_eff)),
+        tags$span("(incon - congr)"),
+        tags$span(paste("Cond:Vers =", new_eff$cond_version_ixn))
       )
     })
 
@@ -297,6 +304,8 @@ server <- function(input, output, session) {
   
   dat <- reactive({
     print("dat()")
+    
+    output$lmer_coef <- renderTable({ tibble() })
     
     new_eff <- simple_means_to_effects(
       input$hard_congr,
@@ -352,6 +361,32 @@ server <- function(input, output, session) {
     session$clientData$output_dat_plot_width*2/3
   })
   
+  ## dat_sub_plot ----
+  output$dat_sub_plot <- renderPlot({
+    new_eff <- simple_means_to_effects(
+      input$hard_congr,
+      input$hard_incon,
+      input$easy_congr,
+      input$easy_incon
+    )
+    plot_dat(dat(), new_eff$grand_i, input$dat_plot_view, "sub")
+  }, height = function() {
+    session$clientData$output_dat_sub_plot_width*2/3
+  })
+  
+  ## dat_stim_plot ----
+  output$dat_stim_plot <- renderPlot({
+    new_eff <- simple_means_to_effects(
+      input$hard_congr,
+      input$hard_incon,
+      input$easy_congr,
+      input$easy_incon
+    )
+    plot_dat(dat(), new_eff$grand_i, input$dat_plot_view, "stim")
+  }, height = function() {
+    session$clientData$output_dat_stim_plot_width*2/3
+  })
+  
   ## ranef_sub_plot ----
   output$ranef_sub_plot <- renderPlot({
     plot_ranef_sub(lmer_mod(), dat())
@@ -380,30 +415,60 @@ server <- function(input, output, session) {
   #     arrange(grp, var1, var2)
   # })
   
+  ## descr_table ----
+  output$descr_table <- renderTable({
+    descr(dat())
+  }, digits = 1, width = "100%")
+  
+  ## dat_table ----
+  output$dat_table <- renderTable({
+    dat() %>%
+      select(sub_id, stim_id, 
+             sub_cond, sub_cond.code,
+             stim_version, stim_version.code,
+             err, dv)
+  }, digits = 1, width = "100%")
+  
+  ## sub_table ----
+  output$sub_dat_table <- renderTable({
+    dat() %>%
+      group_by(sub_id, sub_i, sub_cond, sub_version_slope) %>%
+      summarise()
+  }, digits = 1, width = "100%")
+  
+  ## stim_dat_table ----
+  output$stim_dat_table <- renderTable({
+    dat() %>%
+      group_by(stim_id, stim_i, stim_version_slope, stim_cond_slope, stim_cond_version_slope) %>%
+      summarise()
+  }, digits = 1, width = "100%")
+  
+  ## sub_coef ----
+  output$sub_coef <- renderTable({
+    print("sim_sub_anova()")
+    sim_sub_anova(dat()) %>% 
+      as_tibble(rownames = "Effect") %>%
+      rename(`p-value` = `Pr(>F)`)
+  }, digits = 3, width = "100%")
+  
+  ## stim_coef ----
+  output$stim_coef <- renderTable({
+    print("sim_stim_anova()")
+    sim_stim_anova(dat()) %>% 
+      as_tibble(rownames = "Effect") %>%
+      rename(`p-value` = `Pr(>F)`)
+  }, digits = 3, width = "100%")
+  
+  ## lmer_coef ----
   observeEvent(input$calc_fixed, {
-    ## lmer_coef ----
     output$lmer_coef <- renderTable({
-      lmer_text()$coefficients %>% 
+      isolate(lmer_text())$coefficients %>% 
         as_tibble(rownames = "Effect") %>%
         rename(`p-value` = `Pr(>|t|)`)
     }, digits = 3, width = "100%")
-    
-    ## sub_coef ----
-    output$sub_coef <- renderTable({
-      print("sim_sub_anova()")
-      sim_sub_anova(dat()) %>% 
-        as_tibble(rownames = "Effect") %>%
-        rename(`p-value` = `Pr(>F)`)
-    }, digits = 3, width = "100%")
-    
-    ## stim_coef ----
-    output$stim_coef <- renderTable({
-      print("sim_stim_anova()")
-      sim_stim_anova(dat()) %>% 
-        as_tibble(rownames = "Effect") %>%
-        rename(`p-value` = `Pr(>F)`)
-    }, digits = 3, width = "100%")
   })
+  
+
   
 } # end server()
 
